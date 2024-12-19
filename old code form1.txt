@@ -1,0 +1,201 @@
+Imports MySql.Data.MySqlClient
+Imports Microsoft.VisualBasic.ApplicationServices
+Imports Microsoft.Win32
+Imports Org.BouncyCastle.Crypto
+
+Public Class Form1
+
+    Dim sqlConn As New MySqlConnection
+    Dim sqlCmd As New MySqlCommand
+    Dim sqlRd As MySqlDataReader
+    Dim sqlDt As New DataTable
+    Dim sqlQuery As String
+    Dim DLA As New MySqlDataAdapter
+
+    Dim server As String = "localhost"
+    Dim username As String = "root"
+    Dim password As String = ""
+    Dim database As String = "myconnector"
+
+    Private bitmap As Bitmap
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Set labels and button text
+        Me.Text = "MySQL Connection in VB.Net"
+        Label1.Text = "Student ID"
+        Label2.Text = "Firstname"
+        Label3.Text = "Surname"
+        Label4.Text = "Address"
+        Label5.Text = "Post Code"
+        Label6.Text = "Telephone"
+        Label7.Text = "MySQL Connection in VB.Net"
+
+        btnADDNEW.Text = "Add New"
+        btnUPDATE.Text = "Update"
+        btnDELETE.Text = "Delete"
+        btnRESET.Text = "Reset"
+        btnPRINT.Text = "Print"
+        btnEXIT.Text = "Exit"
+
+        updatetable()
+    End Sub
+
+    ' Update DataGridView
+    Private Sub updatetable()
+        sqlConn.ConnectionString = "server=" + server + ";" + "user id=" + username + ";" _
+            + "password=" + password + ";" + "database=" + database
+
+        sqlConn.Open()
+        sqlCmd.Connection = sqlConn
+        sqlCmd.CommandText = "SELECT * FROM myconnector.myconnector"
+
+        sqlRd = sqlCmd.ExecuteReader
+        sqlDt.Load(sqlRd)
+        sqlRd.Close()
+        sqlConn.Close()
+        DataGridView1.DataSource = sqlDt
+
+    End Sub
+
+    ' Add New Button Event
+    Private Sub btnADDNEW_Click(sender As Object, e As EventArgs) Handles btnADDNEW.Click
+
+        sqlConn.ConnectionString = "server=" + server + ";" + "user id=" + username + ";" _
+                + "password=" + password + ";" + "database=" + database
+        Try
+            sqlConn.Open()
+            sqlQuery = "INSERT INTO myconnector (StudentID, FirstName, Surname, Address, PostCode, Telephone)
+            values('" & TBstudentid.Text & "','" & TBfirstname.Text & "','" & TBsurname.Text & "','" & TBaddress.Text & "','" & TBpostcode.Text & "','" & TBtelephone.Text & "')"
+
+            sqlCmd = New MySqlCommand(sqlQuery, sqlConn)
+            sqlRd = sqlCmd.ExecuteReader
+            sqlConn.Close()
+
+        Catch ex As Exception
+            MessageBox.Show(ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Finally
+            sqlConn.Dispose()
+        End Try
+
+        updatetable()
+
+    End Sub
+
+    ' Update Button Event
+    Private Sub btnUPDATE_Click(sender As Object, e As EventArgs) Handles btnUPDATE.Click
+
+
+        sqlConn.ConnectionString = "server=" + server + ";" + "user id=" + username + ";" _
+                + "password=" + password + ";" + "database=" + database
+        sqlConn.Open()
+
+
+        sqlCmd.Connection = sqlConn
+
+        With sqlCmd
+
+            .CommandText = "Update myconnector.myconnector set Studentid = @Studentid, Firstname = @Firstname, Surname = @Surname,
+                    Address = @Address, Postcode = @Postcode, Telephone = @Telephone where Studentid = @Studentid"
+
+
+            .CommandType = CommandType.Text
+            .Parameters.AddWithValue("@StudentID", TBstudentid.Text)
+            .Parameters.AddWithValue("@FirstName", TBfirstname.Text)
+            .Parameters.AddWithValue("@Surname", TBsurname.Text)
+            .Parameters.AddWithValue("@Address", TBaddress.Text)
+            .Parameters.AddWithValue("@PostCode", TBpostcode.Text)
+            .Parameters.AddWithValue("@Telephone", TBtelephone.Text)
+
+
+        End With
+        sqlCmd.ExecuteNonQuery()
+        sqlConn.Close()
+        updatetable()
+    End Sub
+
+    ' Delete Button Event
+    Private Sub btnDELETE_Click(sender As Object, e As EventArgs) Handles btnDELETE.Click
+        For Each row As DataGridViewRow In DataGridView1.SelectedRows
+        Next
+        updatetable()
+    End Sub
+
+    ' Reset Button Event
+    Private Sub btnRESET_Click(sender As Object, e As EventArgs) Handles btnRESET.Click
+        Try
+
+            For Each txt In Panel4.Controls
+                If TypeOf txt Is TextBox Then
+                    txt.Text = ""
+                End If
+            Next
+            txtSearch.Text = ""
+        Catch ex As Exception
+            MessageBox.Show(Message)
+        End Try
+    End Sub
+
+    ' Exit Button Event
+    Private Sub btnEXIT_Click(sender As Object, e As EventArgs) Handles btnEXIT.Click
+        Dim iExit As DialogResult
+        iExit = MessageBox.Show("Are you sure you want to exit", "Exit Confirmation HAHHAHAHAHAHHAHAHAHAHAHAH", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+        If iExit = DialogResult.Yes Then
+            Application.Exit()
+        End If
+    End Sub
+
+    Private Sub btnPRINT_Click(sender As Object, e As EventArgs) Handles btnPRINT.Click
+
+
+        Dim height As Integer = DataGridView1.Height
+        DataGridView1.Height = DataGridView1.RowCount * DataGridView1.RowTemplate.Height
+        bitmap = New Bitmap(Me.DataGridView1.Width, Me.DataGridView1.Height)
+        DataGridView1.DrawToBitmap(bitmap, New Rectangle(0, 0, Me.DataGridView1.Width, Me.DataGridView1.Height))
+        PrintPreviewDialog1.Document = PrintDocument1
+        PrintPreviewDialog1.PrintPreviewControl.Zoom = 1
+        PrintPreviewDialog1.ShowDialog()
+        DataGridView1.Height = height
+    End Sub
+
+    Private Sub DataGridView1_CellClick(sender As Object, e As DataGridViewCellEventArgs) Handles DataGridView1.CellClick
+
+        Try
+
+            TBstudentid.Text = DataGridView1.SelectedRows(0).Cells(0).Value.ToString
+            TBfirstname.Text = DataGridView1.SelectedRows(0).Cells(0).Value.ToString
+            TBsurname.Text = DataGridView1.SelectedRows(0).Cells(0).Value.ToString
+            TBaddress.Text = DataGridView1.SelectedRows(0).Cells(0).Value.ToString
+            TBpostcode.Text = DataGridView1.SelectedRows(0).Cells(0).Value.ToString
+            TBtelephone.Text = DataGridView1.SelectedRows(0).Cells(0).Value.ToString
+        Catch ex As Exception
+            MessageBox.Show(ex.Message)
+        End Try
+
+    End Sub
+
+    Private Sub PrintDocument1_PrintPage(sender As Object, e As Printing.PrintPageEventArgs) Handles PrintDocument1.PrintPage
+
+
+        e.Graphics.DrawImage(bitmap, 0, 0)
+        Dim recP As RectangleF = e.PageSettings.PrintableArea
+
+        If Me.DataGridView1.Height - recP.Height > 0 Then e.HasMorePages = True
+
+    End Sub
+
+    Private Sub TBsearch_KeyPress(sender As Object, e As KeyPressEventArgs) Handles TBsearch.KeyPress
+
+        Try
+            If Asc(e.KeyChar) = 13 Then
+                Dim dv As DataView
+                dv = sqlDt.DefaultView
+                dv.RowFilter = String.Format("Firstname like '%{0}%'", txtSearch.text)
+                DataGridView1.DataSource = dv.ToTable
+
+            End If
+        Catch ex As Exception
+            MessageBox.Show(ex.Message)
+
+        End Try
+    End Sub
+End Class
